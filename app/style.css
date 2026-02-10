@@ -86,3 +86,128 @@ main {
 .editor-font {
     font-family: var(--font-family-mono);
 }
+
+.notes-area {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.notes-module {
+    display: grid;
+    grid-template-columns: 250px 1fr 1fr; /* Note list, editor, preview */
+    gap: var(--spacing-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    min-height: 600px;
+    overflow: hidden;
+}
+
+.note-list-panel,
+.note-editor-panel,
+.note-preview-panel {
+    padding: var(--spacing-md);
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+}
+
+.note-preview-panel {
+    border-right: none; /* No border on the last panel */
+}
+
+#new-note-btn {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--color-accent);
+    color: var(--color-surface);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#new-note-btn:hover {
+    background-color: #4a6c89; /* Slightly darker accent */
+}
+
+#note-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#note-list li {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text);
+}
+
+#note-list li:hover {
+    background-color: var(--color-border);
+}
+
+#note-list li.selected {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+#note-editor {
+    width: 100%;
+    height: calc(100% - 50px); /* Adjust height for the delete button */
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: var(--spacing-sm);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    resize: none;
+    outline: none;
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+#note-editor:focus {
+    border-color: var(--color-accent);
+}
+
+#delete-note-btn {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-top: var(--spacing-md);
+    background-color: #e53e3e; /* Red for delete */
+    color: var(--color-surface);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#delete-note-btn:hover {
+    background-color: #c53030; /* Darker red */
+}
+
+#delete-note-btn:disabled {
+  background-color: var(--color-text-light);
+  cursor: not-allowed;
+}
+
+#note-preview {
+    padding: var(--spacing-sm);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    min-height: 100%;
+    color: var(--color-text);
+}

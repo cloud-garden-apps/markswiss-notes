@@ -18,12 +18,16 @@ class NotesModule {
         this.renderUI(parentElement);
         this.loadNotes();
         FilterStore.subscribe(() => this.loadNotes());
+        DataStore.subscribe(() => this.loadNotes());
     }
 
     renderUI(parentElement) {
         parentElement.innerHTML = `
             <div class="notes-container">
-                <div class="note-list"></div>
+                <div class="note-list">
+                    <button class="new-note-button">New Note</button>
+                    <div class="notes-items-container"></div>
+                </div>
                 <div class="note-editor">
                     <textarea class="markdown-input"></textarea>
                     <div class="markdown-preview"></div>
@@ -32,15 +36,18 @@ class NotesModule {
         `;
 
         this.noteListElement = parentElement.querySelector('.note-list');
+        this.newNoteButton = parentElement.querySelector('.new-note-button');
+        this.notesItemsContainer = parentElement.querySelector('.notes-items-container');
         this.editorElement = parentElement.querySelector('.markdown-input');
         this.previewElement = parentElement.querySelector('.markdown-preview');
 
+        this.newNoteButton.addEventListener('click', () => this.createNote());
         this.editorElement.addEventListener('input', (e) => this.handleEditorInput(e));
     }
 
     async loadNotes() {
         const query = FilterStore.getSearchQuery().toLowerCase();
-        const activeTags = FilterStore.getTags();
+        const activeTags = FilterStore.getTags(); // activeTags is a Set
         let allNotes = await DataStore.getNotes();
 
         this.notes = allNotes.filter(note => {
@@ -48,8 +55,10 @@ class NotesModule {
                 (note.title && note.title.toLowerCase().includes(query)) ||
                 (note.content && note.content.toLowerCase().includes(query));
 
+            // Ensure note.tags is an array before calling .includes
+            const noteTags = note.tags || []; 
             const matchesTags = activeTags.size === 0 || 
-                (note.tags && Array.from(activeTags).every(tag => note.tags.includes(tag)));
+                Array.from(activeTags).every(tag => noteTags.includes(tag));
 
             return matchesQuery && matchesTags;
         });
@@ -73,25 +82,14 @@ class NotesModule {
     }
 
     renderNoteList() {
-        if (!this.noteListElement) return;
+        if (!this.notesItemsContainer) return;
 
-        // Clear existing content except the new note button if it exists
-        this.noteListElement.innerHTML = ''; 
-
-        // Add a "New Note" button
-        const newNoteButton = document.createElement('button');
-        newNoteButton.textContent = 'New Note';
-        newNoteButton.classList.add('new-note-button');
-        newNoteButton.addEventListener('click', () => this.createNote());
-        this.noteListElement.prepend(newNoteButton);
-
-        const notesContainer = document.createElement('div');
-        notesContainer.classList.add('notes-items-container');
+        this.notesItemsContainer.innerHTML = ''; // Clear only the notes container
 
         if (this.notes.length === 0) {
-            notesContainer.innerHTML = '<p class="no-notes-message">No notes found. Create a new one!</p>';
+            this.notesItemsContainer.innerHTML = '<p class="no-notes-message">No notes found. Create a new one!</p>';
         } else {
-            notesContainer.innerHTML = this.notes.map(note => `
+            this.notesItemsContainer.innerHTML = this.notes.map(note => `
                 <div class="note-list-item ${note.id === this.selectedNoteId ? 'selected' : ''}" data-id="${note.id}">
                     <h3>${note.title || 'New Note'}</h3>
                     <p>${note.content ? note.content.substring(0, 50).replace(/\n/g, ' ') + '...' : 'No content'}</p>
@@ -100,10 +98,7 @@ class NotesModule {
             `).join('');
         }
         
-        this.noteListElement.appendChild(notesContainer);
-
-
-        this.noteListElement.querySelectorAll('.note-list-item').forEach(item => {
+        this.notesItemsContainer.querySelectorAll('.note-list-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 if (!e.target.classList.contains('delete-note-button')) {
                     this.selectNote(e.currentTarget.dataset.id);
@@ -111,7 +106,7 @@ class NotesModule {
             });
         });
 
-        this.noteListElement.querySelectorAll('.delete-note-button').forEach(button => {
+        this.notesItemsContainer.querySelectorAll('.delete-note-button').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.stopPropagation(); 
                 this.deleteNote(e.currentTarget.dataset.id);
@@ -171,7 +166,7 @@ class NotesModule {
             note.title = lines[0].replace(/^[#\s]*/, '') || 'New Note';
             await DataStore.updateNote(note);
             // After updating, reload notes to ensure list reflects changes (especially title)
-            this.loadNotes(); 
+            await this.loadNotes();
         }
     }
 

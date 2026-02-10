@@ -1,0 +1,204 @@
+
+/* Basic Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align to top for longer content */
+    min-height: 100vh;
+    padding: 20px;
+}
+
+#app {
+    display: flex;
+    width: 90%;
+    max-width: 1200px;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden; /* To contain floated/absolutely positioned children if any */
+}
+
+/* Note List (Left Panel) */
+.note-list-container {
+    flex: 0 0 300px; /* Fixed width */
+    border-right: 1px solid #eee;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+}
+
+.note-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.new-note-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.new-note-button:hover {
+    background-color: #0056b3;
+}
+
+.note-list {
+    list-style: none;
+    overflow-y: auto;
+    flex-grow: 1; /* Allows the list to take available space */
+}
+
+.note-list-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.note-list-item:hover {
+    background-color: #e9e9e9;
+}
+
+.note-list-item.selected {
+    background-color: #e0e0e0;
+    font-weight: bold;
+}
+
+.note-list-item h4 {
+    margin-bottom: 5px;
+    color: #333;
+    font-size: 1em;
+}
+
+.note-list-item p {
+    font-size: 0.8em;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Editor and Preview (Right Panel) */
+.note-editor-and-preview {
+    flex-grow: 1; /* Takes remaining space */
+    display: flex;
+}
+
+.markdown-input,
+.markdown-preview {
+    flex: 1;
+    padding: 20px;
+    border: none;
+    font-size: 1em;
+    font-family: 'Monaco', 'Lucida Console', monospace;
+    line-height: 1.5;
+    outline: none;
+    resize: none; /* Disable textarea resize handle */
+}
+
+.markdown-input {
+    border-right: 1px solid #eee;
+    background-color: #fdfdfd;
+}
+
+.markdown-preview {
+    background-color: #fff;
+    overflow-y: auto;
+}
+
+.markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.3em;
+}
+
+.markdown-preview p {
+    margin-bottom: 1em;
+}
+
+.markdown-preview ul, .markdown-preview ol {
+    margin-left: 20px;
+    margin-bottom: 1em;
+}
+
+.markdown-preview code {
+    background-color: #eee;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Lucida Console', monospace;
+}
+
+.markdown-preview pre {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-left: 3px solid #f36d33;
+    color: #666;
+    page-break-inside: avoid;
+    font-family: 'Monaco', 'Lucida Console', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+
+/* Filter and Search (if implemented, placeholder for now) */
+.filter-container {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.tag-filter-list {
+    list-style: none;
+    padding: 10px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tag-filter-list li {
+    background-color: #e0f7fa;
+    color: #00796b;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background-color 0.2s ease;
+}
+
+.tag-filter-list li:hover {
+    background-color: #b2ebf2;
+}
+
+.tag-filter-list li.active {
+    background-color: #00bcd4;
+    color: white;
+}

@@ -1,0 +1,84 @@
+name: Horde Worker
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task brief'
+        required: true
+      branch:
+        description: 'Feature branch name'
+        required: false
+        default: ''
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout product repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKER_TOKEN }}
+
+      - name: Create feature branch
+        if: ${{ github.event.inputs.branch != '' }}
+        run: |
+          git checkout -b ${{ github.event.inputs.branch }}
+
+      - name: Checkout horde-worker
+        uses: actions/checkout@v4
+        with:
+          repository: cloud-garden-apps/horde-worker
+          token: ${{ secrets.WORKER_TOKEN }}
+          path: .horde
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install worker dependencies
+        run: cd .horde && npm install
+
+      - name: Install Playwright
+        run: cd .horde && npx playwright install chromium --with-deps
+
+      - name: Run worker
+        run: cd .horde && npx tsx worker.ts
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WORKSPACE: ${{ github.workspace }}
+          GEMINI_MODEL: gemini-2.5-flash
+          TASK: ${{ github.event.inputs.task }}
+          MAX_TOOL_TURNS_PER_BATCH: '20'
+          MAX_VERIFICATION_RETRIES: '30'
+          MAX_WALL_TIME_MS: '900000'
+
+      - name: Commit output
+        run: |
+          git config user.name "Horde Worker"
+          git config user.email "horde@cloud-garden.app"
+          git add -A -- ':!.horde'
+          git diff --staged --quiet || git commit -m "Update via Horde worker"
+          BRANCH="${{ github.event.inputs.branch }}"
+          if [ -n "$BRANCH" ]; then
+            git push --set-upstream origin "$BRANCH"
+          else
+            git push
+          fi
+
+      - name: Deploy to Netlify
+        if: ${{ always() && github.event.inputs.branch == '' }}
+        run: npx netlify-cli deploy --prod --dir=. --site=${{ secrets.NETLIFY_SITE_ID }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-output
+          path: |
+            *.html
+            *.js
+            *.css
+            *.png

@@ -1,7 +1,7 @@
 
 import { DataStore } from '../data-store/data-store.js';
 import { FilterStore } from '../filters/filter-store.js';
-import { marked } from 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+
 
 class NotesModule {
     constructor() {

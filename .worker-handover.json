@@ -1,6 +1,6 @@
 {
   "status": "incomplete",
-  "summary": "The worker has established the foundational application structure, including the `DataStore` for note persistence, the `FilterStore` for managing search and tags, and the `NotesModule` for the user interface. Significant progress has been made on the `NotesModule`, with UI elements for the note list, editor, and preview initialized, along with basic rendering and event listeners for editor input. However, the critical integration between the `NotesModule`'s CRUD operations and the `DataStore` is incomplete, and the filtering logic in `NotesModule` to react to `FilterStore` changes needs full implementation.",
+  "summary": "The foundational structure for the note-taking application has been established, including the `DataStore` for persistent storage, the `FilterStore` for managing search and tag filters, and the `NotesModule` which houses the core UI for note display, editing, and preview. The `NotesModule` has been initialized with basic HTML structure for the note list, editor, and preview, and event listeners for creating new notes, deleting notes, selecting notes, and typing in the editor are in place. Subscriptions to both `DataStore` and `FilterStore` are set up, allowing the `NotesModule` to react to data and filter changes, but the filtering logic itself and the full implementation of CRUD operations within `NotesModule` are not yet complete.",
   "filesCreated": [
     "README.md",
     "index.html",
@@ -10,24 +10,22 @@
     "style.css"
   ],
   "knownIssues": [
-    "The `DataStore` module is missing or has incomplete implementations for methods to add, update, and delete notes.",
-    "The `NotesModule`'s create, update, and delete operations are not fully connected to the `DataStore` to ensure persistence and data synchronization.",
-    "The `NotesModule` does not fully implement the logic to observe and react to `FilterStore` changes, meaning notes are not filtered by search query or active tags.",
-    "The side-by-side preview might not be fully functional or correctly display markdown content for all note states due to incomplete data flow.",
-    "The UI for selecting an existing note, and updating its content via the editor, is not fully robust or error-handled.",
-    "Unique ID generation for new notes within `DataStore` needs verification.",
-    "Error handling for localStorage operations in `DataStore` is likely missing."
+    "CRUD operations (Create, Update, Delete) are not fully integrated between `NotesModule` and `DataStore`. Specifically, creating a new note, deleting a note, and updating note content from the editor are not completely wired up.",
+    "The filtering logic in `NotesModule._filterNotes` is incomplete; it currently only initializes, but does not perform actual filtering based on `searchQuery` and `activeTags` from `FilterStore`.",
+    "Selecting a note from the list does not yet correctly load its content into the editor or preview, and the visual indication of the selected note is missing.",
+    "The initial rendering of notes from `DataStore` into the note list is not fully functional, and new notes don't immediately appear or become selectable.",
+    "The `index.html` file is still a skeleton; the `NotesModule` needs to be initialized and appended to the DOM.",
+    "The 'marked' library is imported in `index.html` but not yet fully utilized within `NotesModule` for rendering markdown in the preview."
   ],
   "nextSteps": [
-    "Implement the `addNote`, `updateNote`, and `deleteNote` methods in `src/data-store/data-store.js`, ensuring they interact correctly with `localStorage` and notify subscribers.",
-    "Refactor the `NotesModule`'s `_handleNewNote` method to correctly call `DataStore.addNote` and then re-render the notes list.",
-    "Refactor the `NotesModule`'s `_handleEditorInput` and `_handleNoteSelection` methods to correctly call `DataStore.updateNote` when a note's content changes.",
-    "Implement the `NotesModule`'s `_handleDeleteNote` method to call `DataStore.deleteNote` for the currently selected note and update the UI.",
-    "Implement the filtering logic within `NotesModule`'s `renderNotes` or a dedicated filtering method to use `FilterStore`'s `searchQuery` and `activeTags` to display only relevant notes.",
-    "Ensure the `NotesModule` correctly subscribes to `FilterStore` and re-renders notes when filter state changes.",
-    "Verify that the live side-by-side markdown preview correctly updates as the user types in the editor for the currently selected note.",
-    "Add basic error handling and UI feedback for CRUD operations.",
-    "Review and ensure the unique ID generation logic for notes is robust."
+    "Implement the `_handleNewNote` method in `NotesModule` to call `dataStore.addNote`, and then select the newly created note.",
+    "Complete the `_handleDeleteNote` method in `NotesModule` to call `dataStore.deleteNote` for the `selectedNoteId`.",
+    "Finalize the `_handleEditorInput` method to ensure that on every input, `dataStore.updateNote` is called with the current content, title, and selected note ID.",
+    "Flesh out the `_handleNoteSelection` method in `NotesModule` to retrieve the selected note's data from `dataStore`, update `selectedNoteId`, and render its content in the editor and preview.",
+    "Implement the full filtering logic within `NotesModule._filterNotes` to apply both `searchQuery` and `activeTags` from `FilterStore` to the `notes` array before rendering.",
+    "Ensure `NotesModule._renderNotesList` correctly marks the currently `selectedNoteId` with an active style.",
+    "Integrate the `marked` library in `NotesModule._renderPreview` to convert markdown content to HTML.",
+    "Instantiate `NotesModule` in `index.html` and append its main element to the document body to make the UI visible and functional."
   ],
   "estimatedCompletion": 40
 }

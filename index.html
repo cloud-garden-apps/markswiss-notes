@@ -7,33 +7,16 @@
 </head>
 <body>
     <div id="app">
-        <div class="note-list-container">
-            <div class="note-list-header">
-                <h2>Notes</h2>
-                <button class="new-note-button">New Note</button>
-            </div>
-            <div class="filter-container">
-                <input type="text" class="search-input" placeholder="Search notes...">
-                <ul class="tag-filter-list">
-                    <!-- Tags will be rendered here by JavaScript -->
-                </ul>
-            </div>
-            <ul class="note-list">
-                <!-- Notes will be rendered here by JavaScript -->
-            </ul>
-        </div>
-        <div class="note-editor-and-preview">
-            <textarea class="markdown-input" placeholder="Start writing your note..."></textarea>
-            <div class="markdown-preview"></div>
-        </div>
+        <!-- The NotesModule will render its UI here -->
     </div>
 
-    <script src="src/data-store/data-store.js"></script>
-    <script src="src/filters/filter-store.js"></script>
-    <script src="src/notes/notes.js"></script>
-    <script>
+    <script type="module" src="src/data-store/data-store.js"></script>
+    <script type="module" src="src/filters/filter-store.js"></script>
+    <script type="module" src="src/notes/notes.js"></script>
+    <script type="module">
+        import { Notes } from './src/notes/notes.js'; // Assuming NotesModule is exported
         document.addEventListener('DOMContentLoaded', () => {
-            NotesModule.init();
+            Notes.init(document.querySelector('#app'));
         });
     </script>
 </body>

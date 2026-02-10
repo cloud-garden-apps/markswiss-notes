@@ -1,0 +1,186 @@
+
+import { DataStore } from '../data-store/data-store.js';
+import { FilterStore } from '../filters/filter-store.js';
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+
+class NotesModule {
+    constructor() {
+        this.notes = [];
+        this.selectedNoteId = null;
+        this.markdownContent = '';
+        this.editorElement = null;
+        this.previewElement = null;
+        this.noteListElement = null;
+        this.debounceTimer = null;
+    }
+
+    init(parentElement) {
+        this.renderUI(parentElement);
+        this.loadNotes();
+        FilterStore.subscribe(() => this.loadNotes());
+    }
+
+    renderUI(parentElement) {
+        parentElement.innerHTML = `
+            <div class="notes-container">
+                <div class="note-list"></div>
+                <div class="note-editor">
+                    <textarea class="markdown-input"></textarea>
+                    <div class="markdown-preview"></div>
+                </div>
+            </div>
+        `;
+
+        this.noteListElement = parentElement.querySelector('.note-list');
+        this.editorElement = parentElement.querySelector('.markdown-input');
+        this.previewElement = parentElement.querySelector('.markdown-preview');
+
+        this.editorElement.addEventListener('input', (e) => this.handleEditorInput(e));
+        // TODO: Add event listeners for note list interactions (selection, creation, deletion)
+    }
+
+    async loadNotes() {
+        const query = FilterStore.getSearchQuery().toLowerCase();
+        const tags = FilterStore.getTags();
+        let allNotes = await DataStore.getNotes();
+
+        this.notes = allNotes.filter(note => {
+            const matchesQuery = query === '' || 
+                (note.title && note.title.toLowerCase().includes(query)) ||
+                (note.content && note.content.toLowerCase().includes(query));
+
+            const matchesTags = tags.length === 0 || 
+                (note.tags && tags.every(tag => note.tags.includes(tag)));
+
+            return matchesQuery && matchesTags;
+        });
+        this.renderNoteList();
+
+        // If no note is selected, and there are notes, select the first one
+        if (!this.selectedNoteId && this.notes.length > 0) {
+            this.selectNote(this.notes[0].id);
+        } else if (this.selectedNoteId && !this.notes.some(n => n.id === this.selectedNoteId)) {
+            // If the selected note is no longer in the filtered list, deselect it
+            this.selectedNoteId = null;
+            this.markdownContent = '';
+            this.editorElement.value = '';
+            this.updatePreview();
+        }
+
+        // If a note was selected, ensure it's still displayed correctly after refresh
+        if (this.selectedNoteId && this.notes.some(n => n.id === this.selectedNoteId)) {
+            this.selectNote(this.selectedNoteId);
+        } else if (this.notes.length > 0) {
+            // If no note was selected or selected note is no longer in filtered list, select the first one
+            this.selectNote(this.notes[0].id);
+        } else {
+            // No notes available, clear editor
+            this.selectedNoteId = null;
+            this.markdownContent = '';
+            this.editorElement.value = '';
+            this.updatePreview();
+        }
+
+    renderNoteList() {
+        if (!this.noteListElement) return;
+        this.noteListElement.innerHTML = this.notes.map(note => `
+            <div class="note-list-item ${note.id === this.selectedNoteId ? 'selected' : ''}" data-id="${note.id}">
+                <h3>${note.title || 'New Note'}</h3>
+                <p>${note.content ? note.content.substring(0, 50) + '...' : 'No content'}</p>
+                <button class="delete-note-button" data-id="${note.id}">Delete</button>
+            </div>
+        `).join('');
+
+        this.noteListElement.querySelectorAll('.note-list-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Only select the note if the delete button was not clicked
+                if (!e.target.classList.contains('delete-note-button')) {
+                    this.selectNote(e.currentTarget.dataset.id);
+                }
+            });
+        });
+
+        this.noteListElement.querySelectorAll('.delete-note-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent the parent note-list-item click event from firing
+                this.deleteNote(e.currentTarget.dataset.id);
+            });
+        });
+
+        // Add a "New Note" button
+        const newNoteButton = document.createElement('button');
+        newNoteButton.textContent = 'New Note';
+        newNoteButton.addEventListener('click', () => this.createNote());
+        this.noteListElement.prepend(newNoteButton);
+    }
+
+    async createNote() {
+        const newNote = {
+            title: 'New Note',
+            content: '# New Note\n\nStart writing your note here...',
+            tags: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        const createdNote = await DataStore.createNote(newNote);
+        this.notes.push(createdNote);
+        this.renderNoteList();
+        this.selectNote(createdNote.id);
+    }
+
+    async selectNote(id) {
+        this.selectedNoteId = id;
+        const note = this.notes.find(n => n.id === id);
+        if (note) {
+            this.markdownContent = note.content;
+            this.editorElement.value = this.markdownContent;
+            this.updatePreview();
+        }
+        this.renderNoteList(); // Re-render to highlight selected note
+    }
+
+    handleEditorInput(e) {
+        this.markdownContent = e.target.value;
+        this.updatePreview();
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+            this.updateNoteContent(this.selectedNoteId, this.markdownContent);
+        }, 500); // Debounce for 500ms
+    }
+
+    async updateNoteContent(id, content) {
+        if (!id) return;
+        const noteIndex = this.notes.findIndex(n => n.id === id);
+        if (noteIndex > -1) {
+            this.notes[noteIndex].content = content;
+            this.notes[noteIndex].updatedAt = new Date().toISOString();
+            // Also update title if the first line changes
+            const lines = content.split('\n');
+            this.notes[noteIndex].title = lines[0].replace(/^[#\s]*/, '') || 'New Note';
+            await DataStore.updateNote(this.notes[noteIndex]);
+            this.renderNoteList(); // Re-render to update title in list
+        }
+    }
+
+    async deleteNote(id) {
+        if (!id) return;
+        await DataStore.deleteNote(id);
+        this.notes = this.notes.filter(note => note.id !== id);
+        this.renderNoteList();
+        if (this.selectedNoteId === id) {
+            this.selectedNoteId = null;
+            this.markdownContent = '';
+            this.editorElement.value = '';
+            this.updatePreview();
+        }
+    }
+
+    updatePreview() {
+        // This is a placeholder. A markdown parser library would be used here.
+        if (this.previewElement) {
+            this.previewElement.innerHTML = marked.parse(this.markdownContent);
+        }
+    }
+}
+
+export const Notes = new NotesModule();

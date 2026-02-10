@@ -1,0 +1,15 @@
+import { DataStore } from './data-store/data-store.js';
+import { FilterStore } from './filters/filter-store.js';
+import { NotesController } from './notes/notes.js'; // Assuming this will be the main notes module
+
+FilterStore.init();
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize the main notes application component
+    const appRoot = document.getElementById('app-root');
+    if (appRoot) {
+        NotesController.init(appRoot);
+    } else {
+        console.error('App root element not found!');
+    }
+});

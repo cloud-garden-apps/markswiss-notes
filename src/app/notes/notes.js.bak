@@ -1,0 +1,138 @@
+import { DataStore } from '../data-store/data-store.js';
+import { FilterStore } from '../filters/filter-store.js';
+import { MarkdownRenderer } from '../markdown-renderer/markdown-renderer.js';
+
+const ID_PREFIX = 'note-';
+
+let _notesContainer;
+let _editorContainer;
+let _previewContainer;
+let _noteListElement;
+let _editorElement;
+let _previewElement;
+let _addButton;
+let _deleteButton;
+
+let _currentNoteId = null;
+
+function _renderNoteList() {
+    _noteListElement.innerHTML = '';
+    const notes = DataStore.getNotes();
+    const filters = FilterStore.getFilters();
+
+    const filteredNotes = notes.filter(note => {
+        const matchesSearch = filters.searchQuery === '' || note.content.toLowerCase().includes(filters.searchQuery.toLowerCase()) || note.title.toLowerCase().includes(filters.searchQuery.toLowerCase());
+        const matchesTags = filters.tagIds.length === 0 || note.tags.some(tagId => filters.tagIds.includes(tagId));
+        return matchesSearch && matchesTags;
+    });
+
+    filteredNotes.forEach(note => {
+        const listItem = document.createElement('li');
+        listItem.dataset.id = note.id;
+        listItem.classList.add('note-list-item');
+        if (note.id === _currentNoteId) {
+            listItem.classList.add('active');
+        }
+        const noteTitle = note.title && note.title.length > 0 ? note.title : 'New Note';
+        listItem.textContent = noteTitle;
+        listItem.addEventListener('click', () => _selectNote(note.id));
+        _noteListElement.appendChild(listItem);
+    });
+}
+
+function _selectNote(noteId) {
+    if (_currentNoteId === noteId) return;
+
+    _currentNoteId = noteId;
+    const note = DataStore.getNote(noteId);
+
+    if (note) {
+        _editorElement.value = note.content;
+        _renderPreview(note.content);
+        _deleteButton.disabled = false;
+    } else {
+        _editorElement.value = '';
+        _renderPreview('');
+        _deleteButton.disabled = true;
+    }
+    _renderNoteList(); // Re-render to update active state
+}
+
+function _addNote() {
+    const newNote = DataStore.createNote('New Note', '');
+    _selectNote(newNote.id);
+    _editorElement.focus();
+}
+
+function _deleteNote() {
+    if (_currentNoteId) {
+        DataStore.deleteNote(_currentNoteId);
+        _currentNoteId = null;
+        _editorElement.value = '';
+        _renderPreview('');
+        _deleteButton.disabled = true;
+        _renderNoteList();
+    }
+}
+
+function _updateNoteContent() {
+    if (_currentNoteId) {
+        const newContent = _editorElement.value;
+        const newTitle = newContent.split('\n')[0].substring(0, 50); // Take first line as title
+        DataStore.updateNote(_currentNoteId, newTitle, newContent);
+        _renderPreview(newContent);
+        _renderNoteList(); // Update title in the list
+    }
+}
+
+function _renderPreview(markdownContent) {
+    _previewElement.innerHTML = MarkdownRenderer.render(markdownContent);
+}
+
+function _setupEventListeners() {
+    _editorElement.addEventListener('input', _updateNoteContent);
+    _addButton.addEventListener('click', _addNote);
+    _deleteButton.addEventListener('click', _deleteNote);
+    FilterStore.subscribe(_renderNoteList); // Subscribe to filter changes
+}
+
+function _initDOM(appRoot) {
+    appRoot.innerHTML = `
+        <div class="notes-app">
+            <div class="notes-sidebar">
+                <div class="notes-actions">
+                    <button id="add-note-btn">+</button>
+                    <button id="delete-note-btn" disabled>-</button>
+                </div>
+                <ul id="note-list"></ul>
+            </div>
+            <div class="notes-main">
+                <textarea id="note-editor" placeholder="Start writing..."></textarea>
+                <div id="note-preview" class="markdown-body"></div>
+            </div>
+        </div>
+    `;
+
+    _noteListElement = appRoot.querySelector('#note-list');
+    _editorElement = appRoot.querySelector('#note-editor');
+    _previewElement = appRoot.querySelector('#note-preview');
+    _addButton = appRoot.querySelector('#add-note-btn');
+    _deleteButton = appRoot.querySelector('#delete-note-btn');
+
+    _renderNoteList();
+    _setupEventListeners();
+
+    // Select the first note if available, otherwise disable delete button
+    const initialNotes = DataStore.getNotes();
+    if (initialNotes.length > 0) {
+        _selectNote(initialNotes[0].id);
+    } else {
+        _deleteButton.disabled = true;
+    }
+}
+
+export const NotesController = {
+    init: function(appRoot) {
+        _initDOM(appRoot);
+    }
+};

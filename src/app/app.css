@@ -1,0 +1,25 @@
+/* src/app/app.css */
+
+:root {
+    --swiss-dark: #333;
+    --swiss-light: #f4f4f4;
+    --swiss-grey: #ccc;
+    --swiss-medium-grey: #999;
+    --swiss-accent: #007bff;
+    --font-family-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Prevent scrollbars on main body */
+}
+
+#app-root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}

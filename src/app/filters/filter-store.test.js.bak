@@ -1,0 +1,127 @@
+import { FilterStore } from './filter-store.js';
+
+function assert(condition, message) {
+    if (!condition) {
+        throw new Error(message || "Assertion failed");
+    }
+}
+
+function test(name, fn) {
+    try {
+        // Clear filters and subscribers before each test
+        FilterStore._clearAllFilters();
+        // Manually clear subscribers array to avoid cross-test interference
+        FilterStore.subscribers = []; // Exposing subscribers for testing
+        fn();
+        console.log(`✅ ${name}`);
+    } catch (error) {
+        console.error(`❌ ${name}\n`, error);
+    }
+}
+
+console.log('Running FilterStore tests...');
+
+test('should initialize with empty search query and tags', () => {
+    const filters = FilterStore.getFilters();
+    assert(filters.searchQuery === '', 'Search query should be empty');
+    assert(filters.tagIds.length === 0, 'Tag IDs should be empty');
+});
+
+test('should set and get search query', () => {
+    FilterStore.setSearchQuery('hello');
+    const filters = FilterStore.getFilters();
+    assert(filters.searchQuery === 'hello', 'Search query should be "hello"');
+});
+
+test('should add and remove tag filters', () => {
+    FilterStore.addTagFilter('tag1');
+    FilterStore.addTagFilter('tag2');
+    let filters = FilterStore.getFilters();
+    assert(filters.tagIds.includes('tag1'), 'Should contain tag1');
+    assert(filters.tagIds.includes('tag2'), 'Should contain tag2');
+    assert(filters.tagIds.length === 2, 'Should have two tags');
+
+    FilterStore.removeTagFilter('tag1');
+    filters = FilterStore.getFilters();
+    assert(!filters.tagIds.includes('tag1'), 'Should not contain tag1 after removal');
+    assert(filters.tagIds.includes('tag2'), 'Should still contain tag2');
+    assert(filters.tagIds.length === 1, 'Should have one tag after removal');
+});
+
+test('should clear all tag filters', () => {
+    FilterStore.addTagFilter('tag1');
+    FilterStore.addTagFilter('tag2');
+    assert(FilterStore.getFilters().tagIds.length === 2, 'Should have two tags initially');
+
+    FilterStore.clearTagFilters();
+    assert(FilterStore.getFilters().tagIds.length === 0, 'Should have no tags after clearing');
+});
+
+test('should notify subscribers when search query changes', () => {
+    let notifiedQuery = '';
+    const unsubscribe = FilterStore.subscribe((filters) => {
+        notifiedQuery = filters.searchQuery;
+    });
+
+    FilterStore.setSearchQuery('test query');
+    assert(notifiedQuery === 'test query', 'Subscriber should be notified of search query change');
+
+    unsubscribe();
+    FilterStore.setSearchQuery('another query');
+    assert(notifiedQuery === 'test query', 'Subscriber should not be notified after unsubscribe');
+});
+
+test('should notify subscribers when tag filters change', () => {
+    let notifiedTagIds = [];
+    const unsubscribe = FilterStore.subscribe((filters) => {
+        notifiedTagIds = [...filters.tagIds];
+    });
+
+    FilterStore.addTagFilter('tagA');
+    assert(notifiedTagIds.includes('tagA'), 'Subscriber should be notified of tag addition');
+
+    FilterStore.removeTagFilter('tagA');
+    assert(notifiedTagIds.length === 0, 'Subscriber should be notified of tag removal');
+
+    unsubscribe();
+    FilterStore.addTagFilter('tagB');
+    assert(!notifiedTagIds.includes('tagB'), 'Subscriber should not be notified after unsubscribe');
+});
+
+test('should not notify subscribers if search query is unchanged', () => {
+    let callCount = 0;
+    const handler = () => { callCount++; };
+    const unsubscribe = FilterStore.subscribe(handler);
+    const initialCallCount = callCount; // Initial call on subscribe
+
+    FilterStore.setSearchQuery('same query');
+    FilterStore.setSearchQuery('same query'); // Setting again with same value
+    assert(callCount === initialCallCount + 1, 'Subscriber should only be called once for same query');
+    unsubscribe();
+});
+
+test('should not notify subscribers if tag is already present', () => {
+    let callCount = 0;
+    const handler = () => { callCount++; };
+    const unsubscribe = FilterStore.subscribe(handler);
+    const initialCallCount = callCount; // Initial call on subscribe
+
+    FilterStore.addTagFilter('tagX');
+    FilterStore.addTagFilter('tagX'); // Adding same tag again
+    assert(callCount === initialCallCount + 1, 'Subscriber should only be called once for same tag addition');
+    unsubscribe();
+});
+
+test('should persist filters across reloads (simulated)', () => {
+    FilterStore._clearAllFilters(); // Ensure fresh start
+    FilterStore.setSearchQuery('persistent search');
+    FilterStore.addTagFilter('persistent_tag_id');
+
+    // Simulate reload
+    // In a real browser, this would be a page refresh. For testing, we verify localStorage directly.
+    const storedFilters = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FILTER_KEY));
+    assert(storedFilters.searchQuery === 'persistent search', 'Stored search query should match');
+    assert(storedFilters.tagIds.includes('persistent_tag_id'), 'Stored tag ID should match');
+});
+
+console.log('FilterStore tests finished.');

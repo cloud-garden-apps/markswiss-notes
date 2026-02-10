@@ -1,0 +1,221 @@
+/* src/app/notes/notes.css */
+
+
+
+/* Ensure the app takes full height */
+#app, #notes-container, .notes-layout {
+    height: 100%;
+    width: 100%;
+}
+
+/* Base layout for notes */
+.notes-layout {
+    display: flex;
+    font-family: var(--font-family-sans);
+    color: var(--text-color);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Panels */
+.notes-list-panel, .note-editor-panel, .note-preview-panel {
+    border-right: 1px solid var(--border-color);
+    background-color: var(--panel-background);
+    box-sizing: border-box;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.notes-list-panel {
+    flex: 0 0 280px; /* Fixed width for the notes list */
+    border-left: 1px solid var(--border-color); /* To frame the whole app visually */
+}
+
+.note-editor-panel {
+    flex: 1;
+}
+
+.note-preview-panel {
+    flex: 1;
+    /* github-markdown-body class adds its own padding, adjust if necessary */
+    padding: 15px; /* Apply base padding, github-markdown will override some internal elements */
+}
+
+/* Notes List Header */
+.notes-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--header-background);
+    /* Position sticky requires a containing block with overflow set, which is handled by .notes-list-panel */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.notes-list-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    color: var(--swiss-dark);
+}
+
+.add-note-button {
+    background-color: var(--swiss-accent);
+    color: var(--swiss-light);
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.add-note-button:hover {
+    background-color: #0056b3; /* Darker shade of blue for hover */
+}
+
+/* Notes List */
+.notes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1; /* Allow the list to take up available space */
+}
+
+.empty-list-message {
+    padding: 20px 15px;
+    color: var(--swiss-medium-grey);
+    text-align: center;
+    font-style: italic;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.note-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    min-height: 40px; /* Ensure a minimum height for clickability */
+}
+
+.note-list-item:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+.note-list-item:hover {
+    background-color: var(--hover-background);
+}
+
+.note-list-item.selected {
+    background-color: var(--selected-background);
+    color: var(--selected-text-color);
+}
+
+.note-list-item.selected .note-title,
+.note-list-item.selected .note-date {
+    color: var(--selected-text-color); /* Ensure text is white for selected state */
+}
+
+.note-title {
+    flex-grow: 1;
+    font-size: 1em;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+}
+
+.note-date {
+    font-size: 0.8em;
+    color: var(--swiss-medium-grey);
+    white-space: nowrap;
+}
+
+.note-list-item.selected .note-date {
+    color: rgba(255, 255, 255, 0.8); /* Lighter date text for selected state */
+}
+
+.delete-note-button {
+    background: none;
+    border: none;
+    color: var(--swiss-medium-grey);
+    font-size: 0.9em;
+    margin-left: 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    padding: 0;
+    width: 20px; /* Fixed width to prevent shifting */
+    height: 20px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.note-list-item:hover .delete-note-button,
+.note-list-item.selected .delete-note-button {
+    opacity: 1;
+    color: var(--swiss-dark);
+}
+
+.note-list-item.selected .delete-note-button {
+    color: var(--swiss-light);
+}
+
+/* Editor Panel */
+.note-editor {
+    width: 100%;
+    flex-grow: 1;
+    border: none;
+    padding: 15px;
+    font-family: var(--font-family-mono);
+    font-size: 0.95em;
+    line-height: 1.6;
+    resize: none;
+    background-color: var(--panel-background);
+    color: var(--text-color);
+    outline: none;
+}
+
+/* General body styles for consistent typography */
+body {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-color);
+    font-family: var(--font-family-sans);
+    background-color: var(--swiss-light);
+}
+
+/* Global scrollbar styling for a cleaner look */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--swiss-light);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--swiss-grey);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--swiss-medium-grey);
+}
+
+/* Styles for the Markdown Renderer */
+/* The .github-markdown-body class from markdown-renderer/github-markdown.css will apply here */
+
+/* Make sure to load github-markdown.css in index.html or app.js */

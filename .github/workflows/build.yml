@@ -19,10 +19,11 @@ jobs:
         with:
           token: ${{ secrets.WORKER_TOKEN }}
 
-      - name: Create feature branch
+      - name: Create or checkout feature branch
         if: ${{ github.event.inputs.branch != '' }}
         run: |
-          git checkout -b ${{ github.event.inputs.branch }}
+          BRANCH="${{ github.event.inputs.branch }}"
+          git fetch origin "$BRANCH" 2>/dev/null && git checkout "$BRANCH" || git checkout -b "$BRANCH"
 
       - name: Checkout horde-worker
         uses: actions/checkout@v4
@@ -61,7 +62,7 @@ jobs:
           git diff --staged --quiet || git commit -m "Update via Horde worker"
           BRANCH="${{ github.event.inputs.branch }}"
           if [ -n "$BRANCH" ]; then
-            git push --set-upstream origin "$BRANCH"
+            git push --force-with-lease --set-upstream origin "$BRANCH"
           else
             git push
           fi

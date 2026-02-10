@@ -1,0 +1,55 @@
+name: Horde Planner
+on:
+  workflow_dispatch:
+    inputs:
+      spec:
+        description: 'Product specification'
+        required: true
+      answers:
+        description: 'JSON-encoded clarification answers'
+        required: false
+        default: '[]'
+      product_repo:
+        description: 'Product repo (owner/name) to write plan to'
+        required: true
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout horde-worker
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKER_TOKEN }}
+
+      - name: Checkout product repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.product_repo }}
+          token: ${{ secrets.WORKER_TOKEN }}
+          path: .product
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run planner
+        run: npx tsx plan-remote.ts
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SPEC: ${{ github.event.inputs.spec }}
+          ANSWERS: ${{ github.event.inputs.answers }}
+          WORKSPACE: .product
+
+      - name: Commit plan to product repo
+        run: |
+          cd .product
+          git config user.name "Horde Planner"
+          git config user.email "horde@cloud-garden.app"
+          git add .horde-plan.json
+          git diff --staged --quiet || git commit -m "Add Horde plan"
+          git push
